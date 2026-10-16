@@ -1,0 +1,16 @@
+# ARTEX: Hinln 의 비공개 포크 → 공개 저장소에 재배포하지 않음 (직접 클론해서 사용)
+ARTEX/
+
+# lab.sh 가 자동 생성하는 override
+overrides/
+
+# 비밀/자격증명 (ARTEX 실행 시 생기는 것들)
+.env
+ARTEX/data/
+
+# 툴/에디터 부산물
+.omc/
+.DS_Store
+
+# 참고: ARTEX/ 와 vulhub/ 안의 .gitignore 도 그대로 적용된다
+# (node_modules, 빌드 산물 등은 그쪽 규칙이 걸러줌). .env.example 은 커밋된다.

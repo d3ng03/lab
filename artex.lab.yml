@@ -1,0 +1,8 @@
+# ARTEX 원본 docker-compose.yml 위에 덮어쓰는 override.
+# 원본은 건드리지 않고, 웹/프록시 포트를 127.0.0.1 로만 바인딩한다.
+# 사용: docker compose -f ARTEX/docker-compose.yml -f artex.lab.yml up -d
+services:
+  artex:
+    ports: !override
+      - "127.0.0.1:8787:8787"
+      - "127.0.0.1:8788:8788"
