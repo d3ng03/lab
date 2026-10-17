@@ -6,6 +6,7 @@ overrides/
 
 # 비밀/자격증명 (ARTEX 실행 시 생기는 것들)
 .env
+.lab-secrets
 ARTEX/data/
 
 # 툴/에디터 부산물
