@@ -10,10 +10,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VULHUB_DIR="${VULHUB_DIR:-$SCRIPT_DIR/vulhub}"
-ARTEX_DIR="${ARTEX_DIR:-$SCRIPT_DIR/ARTEX}"
+# vulhub / ARTEX / artex.lab.yml 은 lab1·lab2 가 공유 (상위 디렉토리에 있음)
+VULHUB_DIR="${VULHUB_DIR:-$SCRIPT_DIR/../vulhub}"
+ARTEX_DIR="${ARTEX_DIR:-$SCRIPT_DIR/../ARTEX}"
 OVERRIDE_DIR="$SCRIPT_DIR/overrides"
-ARTEX_OVERRIDE="$SCRIPT_DIR/artex.lab.yml"
+ARTEX_OVERRIDE="$SCRIPT_DIR/../artex.lab.yml"
 
 NETWORKS=(lab_dmz lab_internal lab_data)
 # 브리지 이름은 lab-firewall.sh 와 맞춰 고정한다. 모두 --internal (외부 라우팅 없음).
@@ -23,12 +24,18 @@ ARTEX_NET=artex_default   # compose 프로젝트 artex 의 기본 네트워크 (
 
 # 각 줄: "<vulhub 상대경로>|<compose 서비스명>|<연결 네트워크 콤마구분>|<호스트명 alias>"
 # RAM 부족 시 아래 줄을 주석(#) 처리하면 해당 서비스는 제외된다.
+#
+# lab2 = RCE → RCE → DB 체인. lab1 과의 차이: 데이터망 양다리 브리지를
+# jenkins/nacos(RCE 불가) → struts2(S2-045 unauth RCE) 로 교체. 데이터망은 그대로.
+#   DMZ      flask    (Jinja2 SSTI → RCE)                 ← 시작점
+#   내부     grafana · nexus (데코이) · struts2 (RCE 브리지, 데이터망 양다리)
+#   데이터   mysql · redis · elasticsearch                ← 최종 목표(취약점으로 정보 읽기)
+# 의도 경로: flask RCE → struts2 RCE(데이터망 진입) → mysql/redis/es 에서 데이터 획득.
 SERVICES=(
   "flask/ssti|web|lab_dmz,lab_internal|flask"
-  "jenkins/CVE-2024-23897|jenkins|lab_internal,lab_data|jenkins"
   "grafana/CVE-2021-43798|web|lab_internal|grafana"
   "nexus/CVE-2019-7238|web|lab_internal|nexus"
-  "nacos/CVE-2021-29441|web|lab_internal,lab_data|nacos"
+  "struts2/s2-045|struts2|lab_internal,lab_data|struts2"
   "mysql/CVE-2012-2122|mysql|lab_data|mysql"
   "redis/4-unacc|redis|lab_data|redis"
   "elasticsearch/CVE-2015-1427|es|lab_data|elasticsearch"
@@ -366,7 +373,7 @@ up_artex() {
 
   say "격리 확인"
   if ! check_isolation; then
-    die "격리 실패 → ARTEX 를 시작하지 않음. 먼저: sudo ./lab-firewall.sh apply"
+    die "격리 실패 → ARTEX 를 시작하지 않음. 먼저: sudo ../lab-firewall.sh apply"
   fi
 
   say "ARTEX 기동 (포트는 127.0.0.1 전용)"
@@ -424,7 +431,7 @@ cmd_down() {
 cmd_check() {
   ensure_tools
   say "격리 확인"
-  if check_isolation; then say "격리 OK."; else die "격리 실패. sudo ./lab-firewall.sh apply 후 다시 확인하세요."; fi
+  if check_isolation; then say "격리 OK."; else die "격리 실패. sudo ../lab-firewall.sh apply 후 다시 확인하세요."; fi
 }
 
 cmd_status() {
